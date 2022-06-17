@@ -19,8 +19,8 @@ module.exports.getUsersById = (req, res) => {
           res.status(404).send({ message: 'Нет пользователя с таким id' });
         }
       })
-      .catch((err) => res.status(500)
-        .send({ message: `Произошла ошибка ${err}` }));
+      .catch((err) =>
+      res.status(500).send({ message: `Произошла ошибка ${err}` }));
   } else {
     res.status(404).send({ message: 'Нет пользователя с таким id' });
   }
@@ -31,6 +31,5 @@ module.exports.createUser = (req, res) => {
     User.create({ name, about, avatar })
       .then(user =>
         res.send({ data: user }))
-      .catch(err => res.status(500)
-        .send({ message: 'Произошла ошибка' }));
+      .catch(err => res.status(500).send({ message: 'Произошла ошибка' }));
 };
