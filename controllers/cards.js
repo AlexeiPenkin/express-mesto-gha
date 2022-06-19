@@ -7,15 +7,20 @@ const defaultErrorMessage = 'Произошла внутренняя ошибк�
 module.exports.getCards = (req, res) => {
   // console.log(req.user._id);
   Card.find({})
-    .populate('owner')
+    // .populate('owner')
     .then((cards) => res.send({ data: cards }))
     .catch(() => res.status(500).send({ message: defaultErrorMessage }));
 };
 
 module.exports.createCard = (req, res) => {
-  console.log(req.user._id);
   const { name, link } = req.body;
-  Card.create({ name, link, owner: req.user._id })
+  const owner = req.user._id;
+  const likes = [];
+  Card.create(
+    {
+      name, link, owner, likes,
+    },
+  )
     .then((card) => res.send({ data: card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
