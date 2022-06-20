@@ -8,7 +8,7 @@
     "lint": "npx eslint ."
   },
   "keywords": [],
-  "author": "",
+  "author": "Alexei Penkin",
   "license": "ISC",
   "devDependencies": {
     "eslint": "^8.17.0",
