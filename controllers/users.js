@@ -1,8 +1,15 @@
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const cookie = require('cookie-parser');
+
 const User = require('../models/users');
-// const { NotFoundError } = require('../error/NotFoundError');
+
+const app = express();
+app.use(cookie());
 
 const userDataErrorMessage = 'Переданы некорректные данные'; /* ошибка 400 */
-// const userIdErrorMessage = 'Пользователь по указанному _id не найден'; /* ошибка 404 */
+const userIdErrorMessage = 'Пользователь по указанному _id не найден'; /* ошибка 404 */
 const defaultErrorMessage = 'Произошлав внутренняя ошибка сервера'; /* ошибка 500 */
 
 module.exports.getUsers = (req, res) => {
@@ -11,11 +18,11 @@ module.exports.getUsers = (req, res) => {
     .catch(() => res.status(500).send({ message: defaultErrorMessage }));
 };
 
-module.exports.getUsersById = (req, res) => {
+module.exports.getUser = (req, res) => {
   User.findById(req.params.userId)
     .then((user) => {
       if (!user) {
-        res.status(404).send({ message: userDataErrorMessage });
+        res.status(404).send({ message: userIdErrorMessage });
       } else {
         res.send({ data: user });
       }
@@ -30,12 +37,25 @@ module.exports.getUsersById = (req, res) => {
 };
 
 module.exports.createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar })
-    .then((user) => res.send({ data: user }))
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+  if (password.length < 8) {
+    res.status(400).send({ message: 'Длина пароля должна быть не менее 8 символов' });
+  }
+  bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      name, about, avatar, email, password: hash,
+    }))
+    .then(() => res.send({ /* .then((user) */
+      name, about, avatar, email,
+    })) /* { data: user } */
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(400).send({ message: userDataErrorMessage });
+      }
+      if (err.name === 'MongoError' || err.code === 11000) {
+        res.status(409).send({ message: 'Введенный email уже занят используется' });
       } else res.status(500).send({ message: defaultErrorMessage });
     });
 };
@@ -59,5 +79,21 @@ module.exports.updateAvatar = (req, res) => {
       if (err.name === 'ValidationError') {
         res.status(400).send({ message: userDataErrorMessage });
       } else res.status(500).send({ message: defaultErrorMessage });
+    });
+};
+
+module.exports.login = (req, res) => {
+  const { email, password } = req.body;
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, 'magic-key', { expiresIn: '7d' });
+      res.cookie('jwt', token, {
+        maxAge: 604800,
+        httpOnly: true,
+      });
+      res.status(200).send({ token });
+    })
+    .catch((err) => {
+      res.status(200).send({ message: err.message });
     });
 };

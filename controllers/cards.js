@@ -11,11 +11,14 @@ module.exports.getCards = (req, res) => {
 };
 
 module.exports.createCard = (req, res) => {
-  const { name, link } = req.body;
-  const owner = req.user._id;
+  // const { name, link } = req.body;
+  // const owner = req.user._id;
   const likes = [];
   Card.create({
-    name, link, owner, likes,
+    name: req.body.name,
+    link: req.body.link,
+    owner: req.user._id,
+    likes,
   })
     .then((card) => res.send({ data: card }))
     .catch((err) => {
