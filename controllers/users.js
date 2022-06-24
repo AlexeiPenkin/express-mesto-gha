@@ -33,6 +33,7 @@ module.exports.getUser = (req, res) => {
       } else {
         res.status(500).send({ message: userDataErrorMessage });
       }
+      // next(err);
     });
 };
 
@@ -48,14 +49,11 @@ module.exports.createUser = (req, res) => {
       name, about, avatar, email, password: hash,
     }))
     .then(() => res.send({ /* .then((user) */
-      name, about, avatar, email,
-    })) /* { data: user } */
+      name, about, avatar, email, /* { data: user } */
+    }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(400).send({ message: userDataErrorMessage });
-      }
-      if (err.name === 'MongoError' || err.code === 11000) {
-        res.status(409).send({ message: 'Введенный email уже занят используется' });
       } else res.status(500).send({ message: defaultErrorMessage });
     });
 };
@@ -63,7 +61,7 @@ module.exports.createUser = (req, res) => {
 module.exports.updateProfile = (req, res) => {
   const { name, about, avatar } = req.body;
   User.findByIdAndUpdate(req.user._id, { name, about, avatar }, { new: true, runValidators: true })
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.send({ user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(400).send({ message: userDataErrorMessage });
