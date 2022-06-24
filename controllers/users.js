@@ -42,9 +42,9 @@ module.exports.createUser = (req, res) => {
     name, about, avatar, email, password,
   } = req.body;
   if (password.length < 8) {
-    res.status(400).send({ message: 'Длина пароля должна быть не менее 8 символов' });
+    return res.status(400).send({ message: 'Длина пароля должна быть не менее 8 символов' });
   }
-  bcrypt.hash(password, 10)
+  return bcrypt.hash(password, 10)
     .then((hash) => User.create({
       name, about, avatar, email, password: hash,
     }))
@@ -54,6 +54,10 @@ module.exports.createUser = (req, res) => {
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(400).send({ message: userDataErrorMessage });
+        return;
+      }
+      if (err.name === 'MongoError' || err.code === 11000) {
+        res.status(409).send({ message: 'Указанный email уже занят' });
       } else res.status(500).send({ message: defaultErrorMessage });
     });
 };
