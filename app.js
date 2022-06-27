@@ -1,7 +1,11 @@
 const express = require('express');
+
 const mongoose = require('mongoose');
+
 const bodyParser = require('body-parser');
+
 const { createUser, login } = require('./controllers/users');
+
 const auth = require('./middlewares/auth');
 
 const { PORT = 3000 } = process.env;
@@ -32,6 +36,7 @@ app.use('/cards', require('./routes/cards'));
 app.use('/*', (req, res) => {
   res.status(404).send({ message: 'Страницы не существует' });
 });
+
 /* eslint-disable-next-line */
 app.use((err, req, res, next) => {
   const { statusCode = 500, message } = err;

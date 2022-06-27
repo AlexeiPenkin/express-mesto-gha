@@ -1,39 +1,55 @@
 const express = require('express');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cookie = require('cookie-parser');
+const User = require('../models/user');
+// const { NotFoundError } = require('../error/NotFoundError');
 
-const User = require('../models/users');
+const MONGO_DUPLICATE_ERROR_CODE = 11000;
+const SALT_ROUNDS = 10;
+
+const OK_STATUS_CODE = 200;
+const CREATED_STATUS_CODE = 201;
+const CREATED_STATUS_MESSAGE = 'Успешный код состояния: создан';
+const BAD_REQUEST_ERROR_CODE = 400;
+const BAD_REQUEST_ERROR_MESSAGE = 'Переданы некорректные данные';
+const UNAUTHORIZED_ERROR_CODE = 401;
+const UNAUTHORIZED_ERROR_MESSAGE = 'Необходима авторизация';
+const NOT_FOUND_ERROR_CODE = 404;
+const NOT_FOUND_ERROR_MESSAGE = 'Карточка с указанным _id не найдена';
+const CONFLICTING_REQ_ERR_CODE = 409;
+const CONFLICTING_REQ_ERR_MESSAGE = 'Email уже занят';
+const INTERNAL_SERVER_ERROR_CODE = 500;
+const INTERNAL_SERVER_ERROR_MESSAGE = 'Произошла внутренняя ошибка сервера';
 
 const app = express();
 app.use(cookie());
 
-const userDataErrorMessage = 'Переданы некорректные данные'; /* ошибка 400 */
-const userIdErrorMessage = 'Пользователь по указанному _id не найден'; /* ошибка 404 */
-const defaultErrorMessage = 'Произошлав внутренняя ошибка сервера'; /* ошибка 500 */
-
 module.exports.getUsers = (req, res) => {
   User.find({})
-    .then((users) => res.send({ data: users }))
-    .catch(() => res.status(500).send({ message: defaultErrorMessage }));
+    .then((users) => res.status(OK_STATUS_CODE)
+      .send({ data: users }))
+    .catch(() => res.status(BAD_REQUEST_ERROR_CODE)
+      .send({ message: BAD_REQUEST_ERROR_MESSAGE }));
 };
 
-module.exports.getUser = (req, res) => {
+module.exports.getUsersById = (req, res) => {
   User.findById(req.params.userId)
     .then((user) => {
       if (!user) {
-        res.status(404).send({ message: userIdErrorMessage });
-      } else {
-        res.send({ data: user });
+        return res.status(NOT_FOUND_ERROR_CODE)
+          .send({ message: NOT_FOUND_ERROR_MESSAGE });
       }
+      return res.status(OK_STATUS_CODE)
+        .send({ data: user });
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(400).send({ message: userDataErrorMessage });
-      } else {
-        res.status(500).send({ message: userDataErrorMessage });
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
+        return res.status(BAD_REQUEST_ERROR_CODE)
+          .send({ message: BAD_REQUEST_ERROR_MESSAGE });
       }
-      // next(err);
+      return res.status(INTERNAL_SERVER_ERROR_CODE)
+        .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };
 
@@ -41,46 +57,78 @@ module.exports.createUser = (req, res) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
-  if (password.length < 8) {
-    return res.status(400).send({ message: 'Длина пароля должна быть не менее 8 символов' });
+  if (!email || !password) {
+    return res.status(BAD_REQUEST_ERROR_CODE)
+      .send({ message: BAD_REQUEST_ERROR_MESSAGE });
   }
-  return bcrypt.hash(password, 10)
-    .then((hash) => User.create({
-      name, about, avatar, email, password: hash,
-    }))
-    .then(() => res.send({ /* .then((user) */
-      name, about, avatar, email, /* { data: user } */
-    }))
+  return bcrypt.hash(password, SALT_ROUNDS)
+    .then((hash) => {
+      console.log(hash);
+      return User.create({
+        name, about, avatar, email, password: hash,
+      });
+    })
+    .then((user) => res.status(CREATED_STATUS_CODE)
+      .send({ data: user, message: CREATED_STATUS_MESSAGE }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: userDataErrorMessage });
-        return;
+        return res.status(BAD_REQUEST_ERROR_CODE)
+          .send({ message: BAD_REQUEST_ERROR_MESSAGE });
       }
-      if (err.name === 'MongoError' || err.code === 11000) {
-        res.status(409).send({ message: 'Указанный email уже занят' });
-      } else res.status(500).send({ message: defaultErrorMessage });
+      if (err.name === MONGO_DUPLICATE_ERROR_CODE) {
+        return res.status(CONFLICTING_REQ_ERR_CODE)
+          .send({ message: CONFLICTING_REQ_ERR_MESSAGE });
+      }
+      return res.status(INTERNAL_SERVER_ERROR_CODE)
+        .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };
 
 module.exports.updateProfile = (req, res) => {
-  const { name, about, avatar } = req.body;
-  User.findByIdAndUpdate(req.user._id, { name, about, avatar }, { new: true, runValidators: true })
-    .then((user) => res.send({ user }))
+  const { name, about } = req.body;
+  User.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
+    .orFail(() => {
+      throw new Error('NotFound');
+    })
+    .then((user) => {
+      res.status(OK_STATUS_CODE)
+        .send({ data: user });
+    })
     .catch((err) => {
+      if (err.message === 'NotFound') {
+        return res.status(NOT_FOUND_ERROR_CODE)
+          .send({ message: NOT_FOUND_ERROR_MESSAGE });
+      }
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: userDataErrorMessage });
-      } else res.status(500).send({ message: defaultErrorMessage });
+        return res.status(BAD_REQUEST_ERROR_CODE)
+          .send({ message: BAD_REQUEST_ERROR_MESSAGE });
+      }
+      return res.status(INTERNAL_SERVER_ERROR_CODE)
+        .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };
 
 module.exports.updateAvatar = (req, res) => {
   const { avatar } = req.body;
   User.findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
-    .then((user) => (res.send({ data: user })))
+    .orFail(() => {
+      throw new Error('NotFOund');
+    })
+    .then((user) => {
+      res.status(OK_STATUS_CODE)
+        .send({ data: user });
+    })
     .catch((err) => {
+      if (err.message === 'NotFound') {
+        return res.status(NOT_FOUND_ERROR_CODE)
+          .send({ message: NOT_FOUND_ERROR_MESSAGE });
+      }
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: userDataErrorMessage });
-      } else res.status(500).send({ message: defaultErrorMessage });
+        return res.status(BAD_REQUEST_ERROR_CODE)
+          .send({ message: BAD_REQUEST_ERROR_MESSAGE });
+      }
+      return res.status(INTERNAL_SERVER_ERROR_CODE)
+        .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };
 
@@ -93,9 +141,9 @@ module.exports.login = (req, res) => {
         maxAge: 604800,
         httpOnly: true,
       });
-      res.status(200).send({ token });
+      res.status(OK_STATUS_CODE).send({ token });
     })
-    .catch((err) => {
-      res.status(200).send({ message: err.message });
+    .catch(() => {
+      res.status(UNAUTHORIZED_ERROR_CODE).send({ message: UNAUTHORIZED_ERROR_MESSAGE });
     });
 };

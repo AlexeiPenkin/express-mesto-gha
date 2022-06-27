@@ -1,50 +1,67 @@
-const Card = require('../models/cards');
+const Card = require('../models/card');
 
-const cardDataErrorMessage = 'Переданы некорректные данные'; /* ошибка 400 */
-const cardIdErrorMessage = 'Карточка с указанным _id не найдена'; /* ошибка 404 */
-const defaultErrorMessage = 'Произошла внутренняя ошибка сервера'; /* ошибка 500 */
+const OK_STATUS_CODE = 200;
+const BAD_REQUEST_ERROR_CODE = 400;
+const BAD_REQUEST_ERROR_MESSAGE = 'Переданы некорректные данные';
+const NOT_FOUND_ERROR_CODE = 404;
+const NOT_FOUND_ERROR_MESSAGE = 'Карточка с указанным _id не найдена';
+const INTERNAL_SERVER_ERROR_CODE = 500;
+const INTERNAL_SERVER_ERROR_MESSAGE = 'Произошла внутренняя ошибка сервера';
 
 module.exports.getCards = (req, res) => {
   Card.find({})
-    .then((cards) => res.send({ data: cards }))
-    .catch(() => res.status(500).send({ message: defaultErrorMessage }));
+    .then((cards) => res.status(OK_STATUS_CODE)
+      .send({ data: cards }))
+    .catch(() => {
+      res.status(INTERNAL_SERVER_ERROR_CODE)
+        .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
+    });
 };
 
 module.exports.createCard = (req, res) => {
-  // const { name, link } = req.body;
-  // const owner = req.user._id;
+  const { name, link } = req.body;
+  const owner = req.user._id;
   const likes = [];
   Card.create({
-    name: req.body.name,
-    link: req.body.link,
-    owner: req.user._id,
-    likes,
+    name, link, owner, likes,
   })
-    .then((card) => res.send({ data: card }))
+    .then((card) => res.status(OK_STATUS_CODE)
+      .send({ data: card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: cardDataErrorMessage });
+        res.status(BAD_REQUEST_ERROR_CODE)
+          .send({ message: BAD_REQUEST_ERROR_MESSAGE });
       } else {
-        res.status(500).send({ message: defaultErrorMessage });
+        res.status(INTERNAL_SERVER_ERROR_CODE)
+          .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
       }
     });
 };
 
 module.exports.deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
+    .orFail(() => {
+      throw new Error('NotFound');
+    })
     .then((card) => {
-      if (!card) {
-        res.status(404).send({ message: cardIdErrorMessage });
-      } else {
-        res.send({ data: card });
-      }
+      res.status(OK_STATUS_CODE)
+        .send({ data: card });
+      // if (!card) {
+      //   res.status(NOT_FOUND_ERROR_CODE).send({ message: NOT_FOUND_ERROR_MESSAGE });
+      // } else {
+      //   res.send({ data: card });
+      // }
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({ message: cardDataErrorMessage });
-      } else {
-        res.status(500).send({ message: defaultErrorMessage });
+        return res.status(BAD_REQUEST_ERROR_CODE)
+          .send({ message: BAD_REQUEST_ERROR_MESSAGE });
+      } if (err.name === 'NotFound') {
+        return res.status(NOT_FOUND_ERROR_CODE)
+          .send({ message: NOT_FOUND_ERROR_MESSAGE });
       }
+      return res.status(INTERNAL_SERVER_ERROR_CODE)
+        .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };
 
@@ -54,19 +71,21 @@ module.exports.likeCard = (req, res) => {
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
-    .then((card) => {
-      if (!card) {
-        res.status(404).send({ message: cardIdErrorMessage });
-      } else {
-        res.send({ data: card });
+    .then((like) => {
+      if (!like) {
+        res.status(NOT_FOUND_ERROR_CODE)
+          .send({ message: NOT_FOUND_ERROR_MESSAGE });
       }
+      return res.status(OK_STATUS_CODE)
+        .send(like); /* { like } */
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({ message: cardDataErrorMessage });
-      } else {
-        res.status(500).send({ message: defaultErrorMessage });
+        return res.status(BAD_REQUEST_ERROR_CODE)
+          .send({ message: BAD_REQUEST_ERROR_MESSAGE });
       }
+      return res.status(INTERNAL_SERVER_ERROR_CODE)
+        .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };
 
@@ -76,18 +95,20 @@ module.exports.dislikeCard = (req, res) => {
     { $pull: { likes: req.user._id } },
     { new: true },
   )
-    .then((card) => {
-      if (!card) {
-        res.status(404).send({ message: cardIdErrorMessage });
-      } else {
-        res.send({ data: card });
+    .then((like) => {
+      if (!like) {
+        res.status(NOT_FOUND_ERROR_CODE)
+          .send({ message: NOT_FOUND_ERROR_MESSAGE });
       }
+      return res.status(OK_STATUS_CODE)
+        .send(like); /* { like } */
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({ message: cardDataErrorMessage });
-      } else {
-        res.status(500).send({ message: defaultErrorMessage });
+        return res.status(BAD_REQUEST_ERROR_CODE)
+          .send({ message: BAD_REQUEST_ERROR_MESSAGE });
       }
+      return res.status(INTERNAL_SERVER_ERROR_CODE)
+        .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };
