@@ -137,10 +137,6 @@ module.exports.login = (req, res) => {
     .then((user) => {
       console.log(user);
       const token = jwt.sign({ _id: user._id }, 'magic-key', { expiresIn: '7d' });
-      // res.cookie('jwt', token, {
-      //   maxAge: 604800,
-      //   httpOnly: true,
-      // });
       res.status(OK_STATUS_CODE).send({ token });
     })
     .catch(() => {
