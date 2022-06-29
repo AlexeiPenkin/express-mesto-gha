@@ -43,6 +43,8 @@ app.post('/signin', celebrate({
 
 app.use(auth);
 
+// app.post('/cards', auth, createCard);
+
 app.use('/users', require('./routes/users'));
 
 app.use('/cards', require('./routes/cards'));

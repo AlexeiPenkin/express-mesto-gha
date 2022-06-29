@@ -8,6 +8,7 @@ const MONGO_DUPLICATE_ERROR_CODE = 11000;
 const SALT_ROUNDS = 10;
 
 const OK_STATUS_CODE = 200;
+// const OK_STATUS_MESSAGE = 'OK. Всё верно!';
 const CREATED_STATUS_CODE = 201;
 const CREATED_STATUS_MESSAGE = 'Успешный код состояния: создан';
 const BAD_REQUEST_ERROR_CODE = 400;
@@ -137,9 +138,31 @@ module.exports.login = (req, res) => {
     .then((user) => {
       console.log(user);
       const token = jwt.sign({ _id: user._id }, 'magic-key', { expiresIn: '7d' });
-      res.status(OK_STATUS_CODE).send({ token });
+      res.send({ token });
     })
     .catch(() => {
       res.status(UNAUTHORIZED_ERROR_CODE).send({ message: UNAUTHORIZED_ERROR_MESSAGE });
     });
 };
+
+// module.exports.login = (req, res) => {
+//   const { email, password } = req.body;
+//   User.findOne({ email })
+//     .select('+password')
+//     .then((user) => {
+//       if (!user) {
+//         return Promise.reject(new Error(BAD_REQUEST_ERROR_MESSAGE));
+//       }
+//       return bcrypt.compare(password, user.password);
+//     })
+//     .then((matched) => {
+//       if (!matched) {
+//         return Promise.reject(new Error(BAD_REQUEST_ERROR_MESSAGE));
+//       }
+//       return res.send({ message: OK_STATUS_MESSAGE });
+//     })
+//     .catch(() => {
+//       res.status(UNAUTHORIZED_ERROR_CODE)
+//         .send({ message: UNAUTHORIZED_ERROR_MESSAGE });
+//     });
+// };
