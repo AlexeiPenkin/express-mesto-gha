@@ -3,7 +3,6 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cookie = require('cookie-parser');
 const User = require('../models/user');
-// const { NotFoundError } = require('../error/NotFoundError');
 
 const MONGO_DUPLICATE_ERROR_CODE = 11000;
 const SALT_ROUNDS = 10;
@@ -136,11 +135,12 @@ module.exports.login = (req, res) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
+      console.log(user);
       const token = jwt.sign({ _id: user._id }, 'magic-key', { expiresIn: '7d' });
-      res.cookie('jwt', token, {
-        maxAge: 604800,
-        httpOnly: true,
-      });
+      // res.cookie('jwt', token, {
+      //   maxAge: 604800,
+      //   httpOnly: true,
+      // });
       res.status(OK_STATUS_CODE).send({ token });
     })
     .catch(() => {

@@ -84,8 +84,8 @@ module.exports.likeCard = (req, res) => {
         return res.status(BAD_REQUEST_ERROR_CODE)
           .send({ message: BAD_REQUEST_ERROR_MESSAGE });
       }
-      return res.status(INTERNAL_SERVER_ERROR_CODE)
-        .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
+      return res.status(INTERNAL_SERVER_ERROR_CODE);
+      // .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };
 
@@ -108,7 +108,7 @@ module.exports.dislikeCard = (req, res) => {
         return res.status(BAD_REQUEST_ERROR_CODE)
           .send({ message: BAD_REQUEST_ERROR_MESSAGE });
       }
-      return res.status(INTERNAL_SERVER_ERROR_CODE)
-        .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
+      return res.status(INTERNAL_SERVER_ERROR_CODE);
+      // .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };

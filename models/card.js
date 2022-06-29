@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
-const validator = require('validator');
-const user = require('./user');
+// const validator = require('validator');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -13,24 +12,20 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     validate: {
-      // validator: (v) => v.match(/^((http|https):\/\/)?(www\.)?
-      // ([A-Za-zА-Яа-я0-9]{1}[A-Za-zА-Яа-я0-9-]*\.?)*\.{1}
-      // [A-Za-zА-Яа-я0-9-]{2,8}(\/([\w#!:.?+=&%@!\-/])*)?/),
-      // validator: validator.match(/^(http|https):\/\/([\w_-]+)([\w.,@?^=%&:/~+#-]*
-      // [\w@?^=%&/~+#-])/),
-      validator: (v) => validator.isURL(v),
+      validator: (v) => v.match(/http(s?):\/\/(www\.)?[0-9a-zA-Z-]+\.[a-zA-Z]+([0-9a-zA-Z-._~:/?#[\]@!$&'()*+,;=]+)/),
+      // validator: (v) => validator.isURL(v),
       message: 'Некорректная ссылка',
     },
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: user,
+    ref: 'user',
     required: true,
   },
   likes: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: user,
-    default: [],
+    ref: 'user',
+    required: true,
   }],
   createdAt: {
     type: Date,
