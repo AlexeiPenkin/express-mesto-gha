@@ -12,11 +12,7 @@ router.get('/:userId', celebrate({
   }),
 }), getUserById);
 
-router.get('/me', celebrate({
-  params: Joi.object().keys({
-    userId: Joi.string().alphanum().length(24),
-  }),
-}), findUser);
+router.get('/me', findUser);
 
 router.post('/', celebrate({
   body: Joi.object().keys({
