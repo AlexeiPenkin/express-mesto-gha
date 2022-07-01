@@ -3,6 +3,8 @@ const Card = require('../models/card');
 const OK_STATUS_CODE = 200;
 const BAD_REQUEST_ERROR_CODE = 400;
 const BAD_REQUEST_ERROR_MESSAGE = 'Переданы некорректные данные';
+const FORBIDDEN_ERROR_CODE = 403;
+const FORBIDDEN_ERROR_MESSAGE = 'Доступ запрещён';
 const NOT_FOUND_ERROR_CODE = 404;
 const NOT_FOUND_ERROR_MESSAGE = 'Карточка с указанным _id не найдена';
 const INTERNAL_SERVER_ERROR_CODE = 500;
@@ -25,7 +27,7 @@ module.exports.createCard = (req, res) => {
   Card.create({
     name, link, owner, likes,
   })
-    .then((card) => res.status(OK_STATUS_CODE)
+    .then((card) => res.status(200)
       .send({ data: card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
@@ -38,6 +40,44 @@ module.exports.createCard = (req, res) => {
     });
 };
 
+// module.exports.deleteCard = (req, res) => {
+//   Card.findByIdAndRemove(req.params.cardId)
+//     .orFail(() => {
+//       throw new Error('NotFound');
+//     })
+//     .then((card) => {
+//       res.status(OK_STATUS_CODE)
+//         .send({ data: card });
+//     })
+//     .catch((err) => {
+//       if (err.name === 'CastError') {
+//         return res.status(BAD_REQUEST_ERROR_CODE)
+//           .send({ message: BAD_REQUEST_ERROR_MESSAGE });
+//       } return res.status(INTERNAL_SERVER_ERROR_CODE)
+//         .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
+//     });
+// };
+
+// module.exports.deleteCard = (req, res) => {
+//   Card.findByIdAndRemove(req.params.cardId)
+//     .then((card) => {
+//       if (!card) {
+//         res.status(NOT_FOUND_ERROR_CODE)
+//           .send({ message: NOT_FOUND_ERROR_MESSAGE });
+//       }
+//       return res.status(OK_STATUS_CODE)
+//         .send({ message: 'Карточка удалена' });
+//     })
+//     .catch((err) => {
+//       if (err.name === 'CastError') {
+//         return res.status(BAD_REQUEST_ERROR_CODE)
+//           .send({ message: BAD_REQUEST_ERROR_MESSAGE });
+//       }
+//       return res.status(INTERNAL_SERVER_ERROR_CODE)
+//         .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
+//     });
+// };
+
 module.exports.deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
     .orFail(() => {
@@ -46,19 +86,15 @@ module.exports.deleteCard = (req, res) => {
     .then((card) => {
       res.status(OK_STATUS_CODE)
         .send({ data: card });
-      // if (!card) {
-      //   res.status(NOT_FOUND_ERROR_CODE).send({ message: NOT_FOUND_ERROR_MESSAGE });
-      // } else {
-      //   res.send({ data: card });
-      // }
     })
     .catch((err) => {
+      if (err.message === 'Forbidden') {
+        return res.status(FORBIDDEN_ERROR_CODE)
+          .send({ message: FORBIDDEN_ERROR_MESSAGE });
+      }
       if (err.name === 'CastError') {
         return res.status(BAD_REQUEST_ERROR_CODE)
           .send({ message: BAD_REQUEST_ERROR_MESSAGE });
-      } if (err.name === 'NotFound') {
-        return res.status(NOT_FOUND_ERROR_CODE)
-          .send({ message: NOT_FOUND_ERROR_MESSAGE });
       }
       return res.status(INTERNAL_SERVER_ERROR_CODE)
         .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
