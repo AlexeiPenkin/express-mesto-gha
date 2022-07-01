@@ -21,8 +21,8 @@ module.exports.getUsers = (req, res) => {
       .send({ message: BAD_REQUEST_ERROR_MESSAGE }));
 };
 
-module.exports.getUserById = (req, res) => {
-  User.findById(req.params.userId)
+module.exports.findUser = (req, res) => {
+  User.findById(req.user._id)
     .then((user) => {
       if (!user) {
         return res.status(404)
@@ -41,8 +41,8 @@ module.exports.getUserById = (req, res) => {
     });
 };
 
-module.exports.findUser = (req, res) => {
-  User.findById(req.user._id)
+module.exports.getUserById = (req, res) => {
+  User.findById(req.params.userId)
     .then((user) => {
       if (!user) {
         return res.status(404)
