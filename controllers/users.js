@@ -4,22 +4,10 @@ const jwt = require('jsonwebtoken');
 const cookie = require('cookie-parser');
 const User = require('../models/user');
 
-const MONGO_DUPLICATE_ERROR_CODE = 11000;
-const SALT_ROUNDS = 10;
-
-const OK_STATUS_CODE = 200;
-// const OK_STATUS_MESSAGE = 'OK. Всё верно!';
-const CREATED_STATUS_CODE = 201;
-const CREATED_STATUS_MESSAGE = 'Успешно!';
-const BAD_REQUEST_ERROR_CODE = 400;
 const BAD_REQUEST_ERROR_MESSAGE = 'Переданы некорректные данные';
-const UNAUTHORIZED_ERROR_CODE = 401;
 const UNAUTHORIZED_ERROR_MESSAGE = 'Необходима авторизация';
-const NOT_FOUND_ERROR_CODE = 404;
 const NOT_FOUND_ERROR_MESSAGE = 'Карточка с указанным _id не найдена';
-const CONFLICTING_REQ_ERR_CODE = 409;
 const CONFLICTING_REQ_ERR_MESSAGE = 'Email уже занят';
-const INTERNAL_SERVER_ERROR_CODE = 500;
 const INTERNAL_SERVER_ERROR_MESSAGE = 'Произошла внутренняя ошибка сервера';
 
 const app = express();
@@ -27,28 +15,40 @@ app.use(cookie());
 
 module.exports.getUsers = (req, res) => {
   User.find({})
-    .then((users) => res.status(OK_STATUS_CODE)
+    .then((users) => res.status(200)
       .send({ data: users }))
-    .catch(() => res.status(BAD_REQUEST_ERROR_CODE)
+    .catch(() => res.status(400)
       .send({ message: BAD_REQUEST_ERROR_MESSAGE }));
 };
 
-module.exports.getUsersById = (req, res) => {
+module.exports.getUser = (req, res) => {
+  User.findOne(req.user._id)
+    .then((user) => {
+      if (!user) {
+        return res.status(404)
+          .send({ message: NOT_FOUND_ERROR_MESSAGE });
+      }
+      return res.status(200)
+        .send({ data: user });
+    });
+};
+
+module.exports.getUserById = (req, res) => {
   User.findById(req.params.userId)
     .then((user) => {
       if (!user) {
-        return res.status(NOT_FOUND_ERROR_CODE)
+        return res.status(404)
           .send({ message: NOT_FOUND_ERROR_MESSAGE });
       }
-      return res.status(OK_STATUS_CODE)
+      return res.status(200)
         .send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
-        return res.status(BAD_REQUEST_ERROR_CODE)
+        return res.status(400)
           .send({ message: BAD_REQUEST_ERROR_MESSAGE });
       }
-      return res.status(INTERNAL_SERVER_ERROR_CODE)
+      return res.status(500)
         .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };
@@ -58,28 +58,34 @@ module.exports.createUser = (req, res) => {
     name, about, avatar, email, password,
   } = req.body;
   if (!email || !password) {
-    return res.status(BAD_REQUEST_ERROR_CODE)
+    return res.status(400)
       .send({ message: BAD_REQUEST_ERROR_MESSAGE });
   }
-  return bcrypt.hash(password, SALT_ROUNDS)
+  return bcrypt.hash(password, 10)
     .then((hash) => {
       console.log(hash);
       return User.create({
-        name, about, avatar, email, password: hash,
+        name, about, avatar, email, password,
       });
     })
-    .then((user) => res.status(CREATED_STATUS_CODE)
-      .send({ data: user, message: CREATED_STATUS_MESSAGE }))
+    .then((user) => res.status(201)
+      .send({
+        _id: user._id,
+        name: user.name,
+        about: user.about,
+        avatar: user.avatar,
+        email: user.email,
+      }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(BAD_REQUEST_ERROR_CODE)
+        return res.status(400)
           .send({ message: BAD_REQUEST_ERROR_MESSAGE });
       }
-      if (err.name === MONGO_DUPLICATE_ERROR_CODE) {
-        return res.status(CONFLICTING_REQ_ERR_CODE)
+      if (err.code === 11000) {
+        return res.status(409)
           .send({ message: CONFLICTING_REQ_ERR_MESSAGE });
       }
-      return res.status(INTERNAL_SERVER_ERROR_CODE)
+      return res.status(500)
         .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };
@@ -91,19 +97,19 @@ module.exports.updateProfile = (req, res) => {
       throw new Error('NotFound');
     })
     .then((user) => {
-      res.status(OK_STATUS_CODE)
+      res.status(200)
         .send({ data: user });
     })
     .catch((err) => {
       if (err.message === 'NotFound') {
-        return res.status(NOT_FOUND_ERROR_CODE)
+        return res.status(404)
           .send({ message: NOT_FOUND_ERROR_MESSAGE });
       }
       if (err.name === 'ValidationError') {
-        return res.status(BAD_REQUEST_ERROR_CODE)
+        return res.status(400)
           .send({ message: BAD_REQUEST_ERROR_MESSAGE });
       }
-      return res.status(INTERNAL_SERVER_ERROR_CODE)
+      return res.status(500)
         .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };
@@ -115,19 +121,19 @@ module.exports.updateAvatar = (req, res) => {
       throw new Error('NotFOund');
     })
     .then((user) => {
-      res.status(OK_STATUS_CODE)
+      res.status(200)
         .send({ data: user });
     })
     .catch((err) => {
       if (err.message === 'NotFound') {
-        return res.status(NOT_FOUND_ERROR_CODE)
+        return res.status(404)
           .send({ message: NOT_FOUND_ERROR_MESSAGE });
       }
       if (err.name === 'ValidationError') {
-        return res.status(BAD_REQUEST_ERROR_CODE)
+        return res.status(400)
           .send({ message: BAD_REQUEST_ERROR_MESSAGE });
       }
-      return res.status(INTERNAL_SERVER_ERROR_CODE)
+      return res.status(500)
         .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };
@@ -141,7 +147,7 @@ module.exports.login = (req, res) => {
       res.send({ token });
     })
     .catch(() => {
-      res.status(UNAUTHORIZED_ERROR_CODE).send({ message: UNAUTHORIZED_ERROR_MESSAGE });
+      res.status(401).send({ message: UNAUTHORIZED_ERROR_MESSAGE });
     });
 };
 
@@ -162,7 +168,7 @@ module.exports.login = (req, res) => {
 //       return res.send({ message: OK_STATUS_MESSAGE });
 //     })
 //     .catch(() => {
-//       res.status(UNAUTHORIZED_ERROR_CODE)
+//       res.status(401)
 //         .send({ message: UNAUTHORIZED_ERROR_MESSAGE });
 //     });
 // };

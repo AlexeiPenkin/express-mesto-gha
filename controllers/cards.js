@@ -1,21 +1,16 @@
 const Card = require('../models/card');
 
-const OK_STATUS_CODE = 200;
-const BAD_REQUEST_ERROR_CODE = 400;
 const BAD_REQUEST_ERROR_MESSAGE = 'Переданы некорректные данные';
-const FORBIDDEN_ERROR_CODE = 403;
 const FORBIDDEN_ERROR_MESSAGE = 'Доступ запрещён';
-const NOT_FOUND_ERROR_CODE = 404;
 const NOT_FOUND_ERROR_MESSAGE = 'Карточка с указанным _id не найдена';
-const INTERNAL_SERVER_ERROR_CODE = 500;
 const INTERNAL_SERVER_ERROR_MESSAGE = 'Произошла внутренняя ошибка сервера';
 
 module.exports.getCards = (req, res) => {
   Card.find({})
-    .then((cards) => res.status(OK_STATUS_CODE)
+    .then((cards) => res.status(200)
       .send({ data: cards }))
     .catch(() => {
-      res.status(INTERNAL_SERVER_ERROR_CODE)
+      res.status(500)
         .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };
@@ -31,10 +26,10 @@ module.exports.createCard = (req, res) => {
       .send({ data: card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(BAD_REQUEST_ERROR_CODE)
+        res.status(400)
           .send({ message: BAD_REQUEST_ERROR_MESSAGE });
       } else {
-        res.status(INTERNAL_SERVER_ERROR_CODE)
+        res.status(500)
           .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
       }
     });
@@ -46,14 +41,14 @@ module.exports.createCard = (req, res) => {
 //       throw new Error('NotFound');
 //     })
 //     .then((card) => {
-//       res.status(OK_STATUS_CODE)
+//       res.status(200)
 //         .send({ data: card });
 //     })
 //     .catch((err) => {
 //       if (err.name === 'CastError') {
-//         return res.status(BAD_REQUEST_ERROR_CODE)
+//         return res.status(400)
 //           .send({ message: BAD_REQUEST_ERROR_MESSAGE });
-//       } return res.status(INTERNAL_SERVER_ERROR_CODE)
+//       } return res.status(500)
 //         .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
 //     });
 // };
@@ -62,18 +57,18 @@ module.exports.createCard = (req, res) => {
 //   Card.findByIdAndRemove(req.params.cardId)
 //     .then((card) => {
 //       if (!card) {
-//         res.status(NOT_FOUND_ERROR_CODE)
+//         res.status(404)
 //           .send({ message: NOT_FOUND_ERROR_MESSAGE });
 //       }
-//       return res.status(OK_STATUS_CODE)
+//       return res.status(200)
 //         .send({ message: 'Карточка удалена' });
 //     })
 //     .catch((err) => {
 //       if (err.name === 'CastError') {
-//         return res.status(BAD_REQUEST_ERROR_CODE)
+//         return res.status(400)
 //           .send({ message: BAD_REQUEST_ERROR_MESSAGE });
 //       }
-//       return res.status(INTERNAL_SERVER_ERROR_CODE)
+//       return res.status(500)
 //         .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
 //     });
 // };
@@ -84,19 +79,19 @@ module.exports.deleteCard = (req, res) => {
       throw new Error('NotFound');
     })
     .then((card) => {
-      res.status(OK_STATUS_CODE)
+      res.status(200)
         .send({ data: card });
     })
     .catch((err) => {
       if (err.message === 'Forbidden') {
-        return res.status(FORBIDDEN_ERROR_CODE)
+        return res.status(403)
           .send({ message: FORBIDDEN_ERROR_MESSAGE });
       }
       if (err.name === 'CastError') {
-        return res.status(BAD_REQUEST_ERROR_CODE)
+        return res.status(400)
           .send({ message: BAD_REQUEST_ERROR_MESSAGE });
       }
-      return res.status(INTERNAL_SERVER_ERROR_CODE)
+      return res.status(500)
         .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };
@@ -109,18 +104,18 @@ module.exports.likeCard = (req, res) => {
   )
     .then((like) => {
       if (!like) {
-        res.status(NOT_FOUND_ERROR_CODE)
+        res.status(404)
           .send({ message: NOT_FOUND_ERROR_MESSAGE });
       }
-      return res.status(OK_STATUS_CODE)
+      return res.status(200)
         .send(like); /* { like } */
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return res.status(BAD_REQUEST_ERROR_CODE)
+        return res.status(400)
           .send({ message: BAD_REQUEST_ERROR_MESSAGE });
       }
-      return res.status(INTERNAL_SERVER_ERROR_CODE);
+      return res.status(500);
       // .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };
@@ -133,18 +128,18 @@ module.exports.dislikeCard = (req, res) => {
   )
     .then((like) => {
       if (!like) {
-        res.status(NOT_FOUND_ERROR_CODE)
+        res.status(404)
           .send({ message: NOT_FOUND_ERROR_MESSAGE });
       }
-      return res.status(OK_STATUS_CODE)
+      return res.status(200)
         .send(like); /* { like } */
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return res.status(BAD_REQUEST_ERROR_CODE)
+        return res.status(400)
           .send({ message: BAD_REQUEST_ERROR_MESSAGE });
       }
-      return res.status(INTERNAL_SERVER_ERROR_CODE);
+      return res.status(500);
       // .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };

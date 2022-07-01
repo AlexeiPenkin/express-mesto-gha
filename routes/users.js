@@ -3,7 +3,7 @@ const router = require('express').Router();
 const { celebrate, Joi } = require('celebrate');
 
 const {
-  getUsers, getUsersById, updateProfile, updateAvatar,
+  getUsers, getUserById, updateProfile, updateAvatar, createUser, getUser,
 } = require('../controllers/users');
 
 router.get('/', getUsers);
@@ -12,7 +12,27 @@ router.get('/:userId', celebrate({
   params: Joi.object().keys({
     userId: Joi.string().alphanum().length(24),
   }),
-}), getUsersById);
+}), getUserById);
+
+router.get('/me', celebrate({
+  body: Joi.object().keys({
+    name: Joi.string().required().alphanum().min(2)
+      .max(30),
+    about: Joi.string().required().alphanum().min(2)
+      .max(30),
+    password: Joi.string().required().min(8).uri(),
+  }),
+}), getUser);
+
+router.post('/', celebrate({
+  body: Joi.object().keys({
+    name: Joi.string().required().alphanum().min(2)
+      .max(30),
+    about: Joi.string().required().alphanum().min(2)
+      .max(30),
+    password: Joi.string().required().min(8).uri(),
+  }),
+}), createUser);
 
 router.patch('/me', celebrate({
   body: Joi.object().keys({
