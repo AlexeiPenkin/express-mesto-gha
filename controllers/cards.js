@@ -1,7 +1,7 @@
 const Card = require('../models/card');
 
 const BAD_REQUEST_ERROR_MESSAGE = 'Переданы некорректные данные';
-const FORBIDDEN_ERROR_MESSAGE = 'Доступ запрещён';
+// const FORBIDDEN_ERROR_MESSAGE = 'Доступ запрещён';
 const NOT_FOUND_ERROR_MESSAGE = 'Карточка с указанным _id не найдена';
 const INTERNAL_SERVER_ERROR_MESSAGE = 'Произошла внутренняя ошибка сервера';
 
@@ -52,26 +52,6 @@ module.exports.deleteCard = (req, res) => {
       }
     });
 };
-
-// module.exports.deleteCard = (req, res) => {
-//   Card.findByIdAndRemove(req.params.cardId)
-//     .then((card) => {
-//       if (!card) {
-//         return res.status(404)
-//           .send({ message: NOT_FOUND_ERROR_MESSAGE });
-//       }
-//       return res.status(200)
-//         .send({ message: 'Карточка удалена' });
-//     })
-//     .catch((err) => {
-//       if (err.name === 'Forbidden') {
-//         return res.status(400)
-//           .send({ message: FORBIDDEN_ERROR_MESSAGE });
-//       }
-//       return res.status(500)
-//         .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
-//     });
-// };
 
 module.exports.likeCard = (req, res) => {
   Card.findByIdAndUpdate(
