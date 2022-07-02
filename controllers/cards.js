@@ -39,16 +39,16 @@ module.exports.deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
     .then((card) => {
       if (!card) {
-        return res.status(404)
-          .send({ message: NOT_FOUND_ERROR_MESSAGE });
+        res.status(404).send({ message: NOT_FOUND_ERROR_MESSAGE });
+      } else {
+        res.send({ data: card });
       }
-      return res.status(200)
-        .send({ message: 'Карточка удалена' });
     })
     .catch((err) => {
-      if (req.params.cardId !== req.user._id) {
-        return res.status(403)
-          .send({ message: FORBIDDEN_ERROR_MESSAGE });
+      if (err.name === 'CastError') {
+        res.status(400).send({ message: BAD_REQUEST_ERROR_MESSAGE });
+      } else {
+        res.status(500).send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
       }
     });
 };
