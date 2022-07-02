@@ -46,14 +46,32 @@ module.exports.deleteCard = (req, res) => {
         .send({ message: 'Карточка удалена' });
     })
     .catch((err) => {
-      if (err.name === 'Forbidden') {
-        return res.status(400)
+      if (req.params.cardId !== req.user._id) {
+        return res.status(403)
           .send({ message: FORBIDDEN_ERROR_MESSAGE });
       }
-      return res.status(500)
-        .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };
+
+// module.exports.deleteCard = (req, res) => {
+//   Card.findByIdAndRemove(req.params.cardId)
+//     .then((card) => {
+//       if (!card) {
+//         return res.status(404)
+//           .send({ message: NOT_FOUND_ERROR_MESSAGE });
+//       }
+//       return res.status(200)
+//         .send({ message: 'Карточка удалена' });
+//     })
+//     .catch((err) => {
+//       if (err.name === 'Forbidden') {
+//         return res.status(400)
+//           .send({ message: FORBIDDEN_ERROR_MESSAGE });
+//       }
+//       return res.status(500)
+//         .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
+//     });
+// };
 
 module.exports.likeCard = (req, res) => {
   Card.findByIdAndUpdate(
