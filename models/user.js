@@ -2,9 +2,6 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 
-// const BAD_REQUEST_ERROR_CODE = 400;
-const BAD_REQUEST_ERROR_MESSAGE = 'Переданы некорректные данные';
-
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -18,14 +15,14 @@ const userSchema = new mongoose.Schema({
     minlength: 2,
     maxlength: 30,
     required: true,
-    default: 'Исследователь',
+    default: 'Исследователь океана',
   },
   avatar: {
     type: String,
     required: true,
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
     validate: {
-      validator: (v) => validator.isURL(v),
+      validator: (value) => validator.isURL(value),
       message: () => 'Неверный формат ссылки на изображение',
     },
   },
@@ -34,7 +31,7 @@ const userSchema = new mongoose.Schema({
     unique: true,
     required: true,
     validate: {
-      validator: (v) => validator.isEmail(v),
+      validator: (value) => validator.isEmail(value),
       message: () => 'Некорректый адрес почты',
     },
   },
@@ -51,12 +48,12 @@ userSchema.statics.findUserByCredentials = function findUserByCredentials(email,
     .select('+password')
     .then((user) => {
       if (!user) {
-        return Promise.reject(new Error(BAD_REQUEST_ERROR_MESSAGE));
+        return Promise.reject(new Error('Неправильные почта или пароль'));
       }
       return bcrypt.compare(password, user.password)
         .then((matched) => {
           if (!matched) {
-            return Promise.reject(new Error(BAD_REQUEST_ERROR_MESSAGE));
+            return Promise.reject(new Error('Неправильные почта или пароль'));
           }
           return user;
         });

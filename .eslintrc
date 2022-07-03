@@ -5,6 +5,8 @@
   ],
   "rules":
   {
-    "no-underscore-dangle":  ["error", { "allow": ["_id"] }]
+    "no-underscore-dangle":  ["error", { "allow": ["_id"] }],
+    "linebreak-style": 0,
+    "object-curly-newline": 0
   }
 }

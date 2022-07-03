@@ -4,60 +4,53 @@ const jwt = require('jsonwebtoken');
 const cookie = require('cookie-parser');
 const User = require('../models/user');
 
-const BAD_REQUEST_ERROR_MESSAGE = 'Переданы некорректные данные';
-const UNAUTHORIZED_ERROR_MESSAGE = 'Необходима авторизация';
-const NOT_FOUND_ERROR_MESSAGE = 'Карточка с указанным _id не найдена';
-const CONFLICTING_REQ_ERR_MESSAGE = 'Email уже занят';
-const INTERNAL_SERVER_ERROR_MESSAGE = 'Произошла внутренняя ошибка сервера';
+const BAD_REQUEST_ERROR = require('../errors/bad-req-error');
+// const CONFLICT_REQ_ERROR = require('../errors/conflict-error');
+const NOT_FOUND_ERROR = require('../errors/notfound-error');
+// const UNAUTHORIZED_ERROR = require('../errors/unauthorized-error');
 
 const app = express();
 app.use(cookie());
 
-module.exports.getUsers = (req, res) => {
+module.exports.getUsers = (req, res, next) => {
   User.find({})
-    .then((users) => res.status(200)
-      .send({ data: users }))
-    .catch(() => res.status(400)
-      .send({ message: BAD_REQUEST_ERROR_MESSAGE }));
+    .then((users) => res.send(users))
+    .catch(next);
 };
 
-module.exports.findUser = (req, res) => {
+module.exports.findUser = (req, res, next) => {
   User.findById(req.user._id)
     .then((user) => {
       if (!user) {
-        return res.status(404)
-          .send({ message: NOT_FOUND_ERROR_MESSAGE });
+        throw new NOT_FOUND_ERROR('Пользователь не найден');
+      } else {
+        res.send(user);
       }
-      return res.status(200)
-        .send({ data: user });
     })
     .catch((err) => {
-      if (err.name === 'ValidationError' || err.name === 'CastError') {
-        return res.status(400)
-          .send({ message: BAD_REQUEST_ERROR_MESSAGE });
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
+        throw new BAD_REQUEST_ERROR('Переданы некорректные данные');
+      } else {
+        next(err);
       }
-      return res.status(500)
-        .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };
 
-module.exports.getUserById = (req, res) => {
+module.exports.getUserById = (req, res, next) => {
   User.findById(req.params.userId)
     .then((user) => {
       if (!user) {
-        return res.status(404)
-          .send({ message: NOT_FOUND_ERROR_MESSAGE });
+        throw new NOT_FOUND_ERROR('Пользователь не найден');
+      } else {
+        res.send(user);
       }
-      return res.status(200)
-        .send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
-        return res.status(400)
-          .send({ message: BAD_REQUEST_ERROR_MESSAGE });
+        throw new BAD_REQUEST_ERROR('Переданы некорректные данные');
+      } else {
+        next(err);
       }
-      return res.status(500)
-        .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };
 
@@ -67,7 +60,7 @@ module.exports.createUser = (req, res) => {
   } = req.body;
   if (!email || !password) {
     return res.status(400)
-      .send({ message: BAD_REQUEST_ERROR_MESSAGE });
+      .send({ message: 'Переданы некорректные данные' });
   }
   return bcrypt.hash(password, 10)
     .then((hash) => {
@@ -87,76 +80,71 @@ module.exports.createUser = (req, res) => {
     .catch((err) => {
       if (err.name === 'ValidationError') {
         return res.status(400)
-          .send({ message: BAD_REQUEST_ERROR_MESSAGE });
+          .send({ message: 'Переданы некорректные данные' });
       }
       if (err.code === 11000) {
         return res.status(409)
-          .send({ message: CONFLICTING_REQ_ERR_MESSAGE });
+          .send({ message: 'Email уже зарегистрирован' });
       }
       return res.status(500)
-        .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
+        .send({ message: 'Ошибка сервера' });
     });
 };
 
-module.exports.updateProfile = (req, res) => {
+module.exports.updateProfile = (req, res, next) => {
   const { name, about } = req.body;
   User.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
     .orFail(() => {
-      throw new Error('NotFound');
+      throw new Error('Пользователь не найден');
     })
     .then((user) => {
-      res.status(200)
-        .send({ data: user });
+      if (!user) {
+        throw new NOT_FOUND_ERROR('Пользователь не найден');
+      } else {
+        res.send(user);
+      }
     })
     .catch((err) => {
-      if (err.message === 'NotFound') {
-        return res.status(404)
-          .send({ message: NOT_FOUND_ERROR_MESSAGE });
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
+        throw new BAD_REQUEST_ERROR('Переданы некорректные данные');
+      } else {
+        next(err);
       }
-      if (err.name === 'ValidationError') {
-        return res.status(400)
-          .send({ message: BAD_REQUEST_ERROR_MESSAGE });
-      }
-      return res.status(500)
-        .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
     });
 };
 
 module.exports.updateAvatar = (req, res) => {
   const { avatar } = req.body;
   User.findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
-    .orFail(() => {
-      throw new Error('NotFOund');
-    })
     .then((user) => {
-      res.status(200)
-        .send({ data: user });
+      if (!user) {
+        throw new NOT_FOUND_ERROR('Пользователь не найден');
+      } else {
+        res.send(user);
+      }
     })
     .catch((err) => {
       if (err.message === 'NotFound') {
         return res.status(404)
-          .send({ message: NOT_FOUND_ERROR_MESSAGE });
+          .send({ message: 'Пользователь не найден' });
       }
       if (err.name === 'ValidationError') {
         return res.status(400)
-          .send({ message: BAD_REQUEST_ERROR_MESSAGE });
+          .send({ message: 'Переданы некорректные данные' });
       }
       return res.status(500)
-        .send({ message: INTERNAL_SERVER_ERROR_MESSAGE });
+        .send({ message: 'Ошибка сервера' });
     });
 };
 
-module.exports.login = (req, res) => {
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
-      console.log(user);
       const token = jwt.sign({ _id: user._id }, 'magic-key', { expiresIn: '7d' });
       res.send({ token });
     })
-    .catch(() => {
-      res.status(401).send({ message: UNAUTHORIZED_ERROR_MESSAGE });
-    });
+    .catch(next);
 };
 
 // module.exports.login = (req, res) => {
@@ -165,13 +153,13 @@ module.exports.login = (req, res) => {
 //     .select('+password')
 //     .then((user) => {
 //       if (!user) {
-//         return Promise.reject(new Error(BAD_REQUEST_ERROR_MESSAGE));
+//         return Promise.reject(new Error(BAD_REQUEST_ERROR));
 //       }
 //       return bcrypt.compare(password, user.password);
 //     })
 //     .then((matched) => {
 //       if (!matched) {
-//         return Promise.reject(new Error(BAD_REQUEST_ERROR_MESSAGE));
+//         return Promise.reject(new Error(BAD_REQUEST_ERROR));
 //       }
 //       return res.send({ message: OK_STATUS_MESSAGE });
 //     })
