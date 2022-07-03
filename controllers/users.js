@@ -5,16 +5,15 @@ const cookie = require('cookie-parser');
 const User = require('../models/user');
 
 const BAD_REQUEST_ERROR = require('../errors/bad-req-error');
-// const CONFLICT_REQ_ERROR = require('../errors/conflict-error');
 const NOT_FOUND_ERROR = require('../errors/notfound-error');
-// const UNAUTHORIZED_ERROR = require('../errors/unauthorized-error');
+const CONFLICT_ERROR = require('../errors/conflict-error');
 
 const app = express();
 app.use(cookie());
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
-    .then((users) => res.send(users))
+    .then((users) => res.send({ data: users }))
     .catch(next);
 };
 
@@ -58,10 +57,10 @@ module.exports.createUser = (req, res) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
-  if (!email || !password) {
-    return res.status(400)
-      .send({ message: 'Переданы некорректные данные' });
-  }
+  // if (!email || !password) {
+  //   return res.status(400)
+  //     .send({ message: 'Переданы некорректные данные' });
+  // }
   return bcrypt.hash(password, 10)
     .then((hash) => {
       console.log(hash);
@@ -78,13 +77,11 @@ module.exports.createUser = (req, res) => {
         email: user.email,
       }))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(400)
-          .send({ message: 'Переданы некорректные данные' });
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
+        throw new NOT_FOUND_ERROR('Пользователь не найден');
       }
       if (err.code === 11000) {
-        return res.status(409)
-          .send({ message: 'Email уже зарегистрирован' });
+        throw new CONFLICT_ERROR('Email уже зарегистрирован');
       }
       return res.status(500)
         .send({ message: 'Ошибка сервера' });
@@ -94,9 +91,6 @@ module.exports.createUser = (req, res) => {
 module.exports.updateProfile = (req, res, next) => {
   const { name, about } = req.body;
   User.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
-    .orFail(() => {
-      throw new Error('Пользователь не найден');
-    })
     .then((user) => {
       if (!user) {
         throw new NOT_FOUND_ERROR('Пользователь не найден');

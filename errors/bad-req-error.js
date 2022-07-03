@@ -1,8 +1,8 @@
-class BADREQERROR extends Error {
+class BADREQUESTERROR extends Error {
   constructor(message) {
     super(message);
     this.statusCode = 400;
   }
 }
 
-module.exports = BADREQERROR;
+module.exports = BADREQUESTERROR;
