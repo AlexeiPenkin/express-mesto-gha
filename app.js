@@ -6,6 +6,8 @@ const bodyParser = require('body-parser');
 
 const { celebrate, Joi, errors } = require('celebrate');
 
+const { isURL } = require('validator');
+
 const { createUser, login } = require('./controllers/users');
 
 const auth = require('./middlewares/auth');
@@ -22,7 +24,12 @@ app.post('/signup', celebrate({
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30),
     about: Joi.string().required().min(2).max(30),
-    avatar: Joi.string().required().uri(),
+    avatar: Joi.string().custom((value, error) => {
+      if (isURL(value)) {
+        return value;
+      }
+      return error.message('Некорректный формат ссылки');
+    }),
     email: Joi.string().required().email(),
     password: Joi.string().required().min(8),
   }),
