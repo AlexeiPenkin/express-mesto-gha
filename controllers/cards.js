@@ -1,7 +1,7 @@
 const Card = require('../models/card');
 
 const BAD_REQUEST_ERROR = require('../errors/bad-req-error');
-const FORBIDDEN_ERROR = require('../errors/forbidden-error');
+// const FORBIDDEN_ERROR = require('../errors/forbidden-error');
 const NOT_FOUND_ERROR = require('../errors/notfound-error');
 
 module.exports.getCards = (req, res, next) => {
@@ -32,6 +32,9 @@ module.exports.createCard = (req, res) => {
 
 module.exports.deleteCard = (req, res, next) => {
   Card.findById(req.params.cardId)
+    .orFail(() => {
+      throw new NOT_FOUND_ERROR('Карточка с указанным id не найдена');
+    })
     .then((card) => {
       if (String(card.owner) !== String(req.user._id)) {
         throw new NOT_FOUND_ERROR('Карточка с указанным id не найдена');
