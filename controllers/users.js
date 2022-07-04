@@ -70,16 +70,14 @@ module.exports.createUser = (req, res, next) => {
       }))
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
-        throw new NOT_FOUND_ERROR('Пользователь не найден');
+        return next(new NOT_FOUND_ERROR('Пользователь не найден'));
       }
       if (err.code === 11000) {
-        throw new CONFLICT_ERROR('Email уже зарегистрирован');
+        return next(new CONFLICT_ERROR('Email уже зарегистрирован'));
       }
       if (err.code === 500) {
-        throw new INTERNAL_SERVER_ERROR('Email уже зарегистрирован');
-      } else {
-        next(err);
-      }
+        return next(new INTERNAL_SERVER_ERROR('Email уже зарегистрирован'));
+      } return next(err);
     });
 };
 

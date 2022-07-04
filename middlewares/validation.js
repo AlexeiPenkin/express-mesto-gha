@@ -1,5 +1,6 @@
 const { celebrate, Joi } = require('celebrate');
-const { isURL } = require('validator');
+const isURL = require('validator');
+const RegExp = require('../models/user');
 
 module.exports.findUserValidation = celebrate({
   params: Joi.object().keys({
@@ -18,7 +19,7 @@ module.exports.createUserValidation = celebrate({
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
     avatar: Joi.string().custom((value, error) => {
-      if (isURL(value)) {
+      if (RegExp(value)) {
         return value;
       }
       return error.message('Некорректный формат ссылки');
@@ -38,7 +39,7 @@ module.exports.updateProfileValidation = celebrate({
 module.exports.updateAvatarValidation = celebrate({
   body: Joi.object().keys({
     avatar: Joi.string().custom((value, error) => {
-      if (isURL(value)) {
+      if (RegExp(value)) {
         return value;
       }
       return error.message('Некорректный формат ссылки');
