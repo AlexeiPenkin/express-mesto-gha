@@ -1,6 +1,5 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { result } = require('validate.js');
 const User = require('../models/user');
 
 const BAD_REQUEST_ERROR = require('../errors/bad-req-error');
@@ -50,7 +49,7 @@ module.exports.getUserById = (req, res, next) => {
     });
 };
 
-module.exports.createUser = (req, res) => {
+module.exports.createUser = (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
@@ -78,7 +77,9 @@ module.exports.createUser = (req, res) => {
       }
       if (err.code === 500) {
         throw new INTERNAL_SERVER_ERROR('Email уже зарегистрирован');
-      } return (result);
+      } else {
+        next(err);
+      }
     });
 };
 
@@ -101,7 +102,7 @@ module.exports.updateProfile = (req, res, next) => {
     });
 };
 
-module.exports.updateAvatar = (req, res) => {
+module.exports.updateAvatar = (req, res, next) => {
   const { avatar } = req.body;
   User.findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
     .then((user) => {
@@ -121,7 +122,7 @@ module.exports.updateAvatar = (req, res) => {
       }
       if (err.code === 500) {
         throw new INTERNAL_SERVER_ERROR('Email уже зарегистрирован');
-      } return (result);
+      } return (next);
     });
 };
 

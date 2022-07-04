@@ -1,23 +1,17 @@
 const express = require('express');
-
 const mongoose = require('mongoose');
-
 const bodyParser = require('body-parser');
-
 const { errors } = require('celebrate');
-
+const cookie = require('cookie-parser');
 const { createUser, login } = require('./controllers/users');
-
 const auth = require('./middlewares/auth');
-
 const users = require('./routes/users');
-
 const cards = require('./routes/cards');
-
 const { createUserValidation, loginValidation } = require('./middlewares/validation');
 
 const { PORT = 3000 } = process.env;
 const app = express();
+app.use(cookie());
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));

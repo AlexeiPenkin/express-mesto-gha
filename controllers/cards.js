@@ -3,7 +3,7 @@ const Card = require('../models/card');
 const BAD_REQUEST_ERROR = require('../errors/bad-req-error');
 const FORBIDDEN_ERROR = require('../errors/forbidden-error');
 const NOT_FOUND_ERROR = require('../errors/notfound-error');
-const INTERNAL_SERVER_ERROR = require('../errors/internal-server-error');
+// const INTERNAL_SERVER_ERROR = require('../errors/internal-server-error');
 
 module.exports.getCards = (req, res, next) => {
   Card.find({})
@@ -11,7 +11,7 @@ module.exports.getCards = (req, res, next) => {
     .catch(next);
 };
 
-module.exports.createCard = (req, res) => {
+module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
   const owner = req.user._id;
   const likes = [];
@@ -23,10 +23,9 @@ module.exports.createCard = (req, res) => {
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
         throw new BAD_REQUEST_ERROR('Переданы некорректные данные');
+      } else {
+        next(err);
       }
-      if (err.code === 500) {
-        throw new INTERNAL_SERVER_ERROR('Email уже зарегистрирован');
-      } return (result);
     });
 };
 
