@@ -3,13 +3,13 @@ const { isURL } = require('validator');
 
 module.exports.findUserValidation = celebrate({
   params: Joi.object().keys({
-    userId: Joi.string().length(24).alphanum(),
+    userId: Joi.string().length(24).hex(),
   }),
 });
 
 module.exports.getUserByIdValidation = celebrate({
   params: Joi.object().keys({
-    userId: Joi.string().length(24).alphanum(),
+    userId: Joi.string().length(24).hex(),
   }),
 });
 
@@ -67,18 +67,18 @@ module.exports.createCardValidation = celebrate({
 
 module.exports.deleteCardValidation = celebrate({
   params: Joi.object().keys({
-    cardId: Joi.string().length(24).alphanum(),
+    cardId: Joi.string().length(24).hex(),
   }),
 });
 
 module.exports.likeCardValidation = celebrate({
   params: Joi.object().keys({
-    cardId: Joi.string().length(24).alphanum(),
+    cardId: Joi.string().length(24).hex(),
   }),
 });
 
 module.exports.dislikeCardValidation = celebrate({
   params: Joi.object().keys({
-    cardId: Joi.string().length(24).alphanum(),
+    cardId: Joi.string().length(24).hex(),
   }),
 });

@@ -1,15 +1,12 @@
-const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const cookie = require('cookie-parser');
+const { result } = require('validate.js');
 const User = require('../models/user');
 
 const BAD_REQUEST_ERROR = require('../errors/bad-req-error');
 const NOT_FOUND_ERROR = require('../errors/notfound-error');
 const CONFLICT_ERROR = require('../errors/conflict-error');
-
-const app = express();
-app.use(cookie());
+const INTERNAL_SERVER_ERROR = require('../errors/internal-server-error');
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
@@ -57,10 +54,6 @@ module.exports.createUser = (req, res) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
-  // if (!email || !password) {
-  //   return res.status(400)
-  //     .send({ message: 'Переданы некорректные данные' });
-  // }
   return bcrypt.hash(password, 10)
     .then((hash) => {
       console.log(hash);
@@ -83,8 +76,9 @@ module.exports.createUser = (req, res) => {
       if (err.code === 11000) {
         throw new CONFLICT_ERROR('Email уже зарегистрирован');
       }
-      return res.status(500)
-        .send({ message: 'Ошибка сервера' });
+      if (err.code === 500) {
+        throw new INTERNAL_SERVER_ERROR('Email уже зарегистрирован');
+      } return (result);
     });
 };
 
@@ -122,12 +116,12 @@ module.exports.updateAvatar = (req, res) => {
         return res.status(404)
           .send({ message: 'Пользователь не найден' });
       }
-      if (err.name === 'ValidationError') {
-        return res.status(400)
-          .send({ message: 'Переданы некорректные данные' });
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
+        throw new BAD_REQUEST_ERROR('Переданы некорректные данные');
       }
-      return res.status(500)
-        .send({ message: 'Ошибка сервера' });
+      if (err.code === 500) {
+        throw new INTERNAL_SERVER_ERROR('Email уже зарегистрирован');
+      } return (result);
     });
 };
 
@@ -140,25 +134,3 @@ module.exports.login = (req, res, next) => {
     })
     .catch(next);
 };
-
-// module.exports.login = (req, res) => {
-//   const { email, password } = req.body;
-//   User.findOne({ email })
-//     .select('+password')
-//     .then((user) => {
-//       if (!user) {
-//         return Promise.reject(new Error(BAD_REQUEST_ERROR));
-//       }
-//       return bcrypt.compare(password, user.password);
-//     })
-//     .then((matched) => {
-//       if (!matched) {
-//         return Promise.reject(new Error(BAD_REQUEST_ERROR));
-//       }
-//       return res.send({ message: OK_STATUS_MESSAGE });
-//     })
-//     .catch(() => {
-//       res.status(401)
-//         .send({ message: UNAUTHORIZED_ERROR_MESSAGE });
-//     });
-// };

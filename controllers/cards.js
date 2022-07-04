@@ -1,8 +1,9 @@
 const Card = require('../models/card');
 
 const BAD_REQUEST_ERROR = require('../errors/bad-req-error');
-// const FORBIDDEN_ERROR = require('../errors/forbidden-error');
+const FORBIDDEN_ERROR = require('../errors/forbidden-error');
 const NOT_FOUND_ERROR = require('../errors/notfound-error');
+const INTERNAL_SERVER_ERROR = require('../errors/internal-server-error');
 
 module.exports.getCards = (req, res, next) => {
   Card.find({})
@@ -21,12 +22,11 @@ module.exports.createCard = (req, res) => {
       .send({ data: card }))
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
-        res.status(400)
-          .send({ message: 'Переданы некорректные данные' });
-      } else {
-        res.status(500)
-          .send({ message: 'Ошибка сервера' });
+        throw new BAD_REQUEST_ERROR('Переданы некорректные данные');
       }
+      if (err.code === 500) {
+        throw new INTERNAL_SERVER_ERROR('Email уже зарегистрирован');
+      } return (result);
     });
 };
 
@@ -37,7 +37,7 @@ module.exports.deleteCard = (req, res, next) => {
     })
     .then((card) => {
       if (String(card.owner) !== String(req.user._id)) {
-        throw new NOT_FOUND_ERROR('Карточка с указанным id не найдена');
+        throw new FORBIDDEN_ERROR('Запрещено удалять чужую карточку');
       }
     })
     .then(() => {
