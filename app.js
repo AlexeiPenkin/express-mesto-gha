@@ -8,6 +8,7 @@ const auth = require('./middlewares/auth');
 const users = require('./routes/users');
 const cards = require('./routes/cards');
 const { createUserValidation, loginValidation } = require('./middlewares/validation');
+const NOT_FOUND_ERROR = require('./errors/notfound-error');
 
 const { PORT = 3000 } = process.env;
 const app = express();
@@ -28,12 +29,7 @@ app.use('/users', users);
 
 app.use('/cards', cards);
 
-app.use('/*', (err, req, res, next) => {
-  const { statusCode = 404, message } = err;
-  res.status(statusCode).send({ message: statusCode === 404 ? 'Страницы не существует' : message,
-  });
-  return (next);
-});
+app.use('/*', (req, res, next) => next(new NOT_FOUND_ERROR('Страницы не существует')));
 
 app.use(errors());
 

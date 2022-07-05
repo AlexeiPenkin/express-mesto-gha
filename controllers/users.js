@@ -75,9 +75,10 @@ module.exports.createUser = (req, res, next) => {
       if (err.code === 11000) {
         return next(new CONFLICT_ERROR('Email уже зарегистрирован'));
       }
-      if (err.code === 500) {
-        return next(new INTERNAL_SERVER_ERROR('Email уже зарегистрирован'));
-      } return next(err);
+      // if (err.code === 500) {
+      //   return next(new INTERNAL_SERVER_ERROR('Email уже зарегистрирован'));
+      // }
+      return next(err);
     });
 };
 

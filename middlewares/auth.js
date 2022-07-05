@@ -15,8 +15,7 @@ module.exports = (req, res, next) => {
   try {
     payload = jwt.verify(token, 'magic-key');
   } catch (err) {
-    return res.status(401)
-      .send({ message: 'Необходима авторизация' });
+    throw new FORBIDDEN_ERROR({ message: 'Необходима авторизация' });
   }
 
   req.user = payload;
